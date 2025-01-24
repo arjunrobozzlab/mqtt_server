@@ -24,7 +24,8 @@ ChartJS.register(
 );
 
 const API_URL = "http://localhost:3000";
-//const API_URL = "https://smartaxiom.netlify.app";
+//const API_URL = "https://mqtt-server-po2j.onrender.com";
+
 function Dashboard() {
   const [devices, setDevices] = useState({});
   const [filter, setFilter] = useState("all");
