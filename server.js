@@ -3,7 +3,13 @@ const express = require("express");
 const cors = require("cors");
 
 const app = express();
-app.use(cors());
+//app.use(cors());
+
+app.use(
+  cors({
+    origin: "https://smartaxiom.netlify.app", // Allow only your Netlify site
+  })
+);
 
 const brokerUrl = "mqtt://gull.rmq.cloudamqp.com";
 const mqttOptions = {
@@ -71,7 +77,7 @@ app.get("/devices", (req, res) => {
 app.post("/devices/:id/commands", express.json(), (req, res) => {
   const deviceId = req.params.id;
   const command = req.body;
-  
+
   if (command.action === "set_interval") {
     console.log(`Setting interval for ${deviceId} to ${command.interval} seconds`);
     // Add additional handling logic here if needed
@@ -86,6 +92,11 @@ app.post("/devices/:id/commands", express.json(), (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
+// app.listen(port, () => {
+//   console.log(`Server running at http://localhost:${port}`);
+// });
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server running at http://localhost:${PORT}`);
 });

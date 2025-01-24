@@ -23,8 +23,8 @@ ChartJS.register(
   Legend
 );
 
-const API_URL = "http://localhost:3000";
-//const API_URL = "https://mqtt-server-po2j.onrender.com";
+//const API_URL = "http://localhost:3000";
+const API_URL = "https://mqtt-server-po2j.onrender.com";
 
 function Dashboard() {
   const [devices, setDevices] = useState({});
