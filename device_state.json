@@ -9,71 +9,71 @@
     ],
     "status": "online",
     "telemetry": {
-      "temperature": 29.31,
-      "battery": 6.6,
-      "humidity": 57.63,
-      "timestamp": 1737791115088
+      "temperature": 27.35,
+      "battery": 4.8,
+      "humidity": 31.43,
+      "timestamp": 1737791427072
     },
     "telemetryHistory": [
       {
-        "temperature": 28.3,
-        "battery": 4.5,
-        "humidity": 46.71,
-        "timestamp": 1737791070000
+        "temperature": 23.27,
+        "battery": 7.5,
+        "humidity": 32.59,
+        "timestamp": 1737791380724
       },
       {
-        "temperature": 23.93,
+        "temperature": 20.67,
+        "battery": 5.7,
+        "humidity": 69.24,
+        "timestamp": 1737791387017
+      },
+      {
+        "temperature": 26.48,
+        "battery": 4.3,
+        "humidity": 55.7,
+        "timestamp": 1737791390733
+      },
+      {
+        "temperature": 21.3,
+        "battery": 6,
+        "humidity": 62.47,
+        "timestamp": 1737791397098
+      },
+      {
+        "temperature": 23.65,
+        "battery": 8.4,
+        "humidity": 35.99,
+        "timestamp": 1737791401312
+      },
+      {
+        "temperature": 24.99,
+        "battery": 3.2,
+        "humidity": 38.95,
+        "timestamp": 1737791407051
+      },
+      {
+        "temperature": 23.31,
+        "battery": 6.6,
+        "humidity": 42.74,
+        "timestamp": 1737791410782
+      },
+      {
+        "temperature": 26.14,
+        "battery": 9.1,
+        "humidity": 62.94,
+        "timestamp": 1737791416994
+      },
+      {
+        "temperature": 23.79,
         "battery": 3.5,
-        "humidity": 36.47,
-        "timestamp": 1737791075005
-      },
-      {
-        "temperature": 25.91,
-        "battery": 6.7,
-        "humidity": 45.2,
-        "timestamp": 1737791080081
+        "humidity": 63.31,
+        "timestamp": 1737791420851
       },
       {
         "temperature": 27.35,
-        "battery": 9.7,
-        "humidity": 59.29,
-        "timestamp": 1737791085019
-      },
-      {
-        "temperature": 20.96,
-        "battery": 3.5,
-        "humidity": 65.03,
-        "timestamp": 1737791090063
-      },
-      {
-        "temperature": 21.47,
-        "battery": 7,
-        "humidity": 32.55,
-        "timestamp": 1737791095050
-      },
-      {
-        "temperature": 22.52,
-        "battery": 7.6,
-        "humidity": 37.65,
-        "timestamp": 1737791100058
-      },
-      {
-        "temperature": 25.23,
-        "battery": 7.9,
-        "humidity": 36.64,
-        "timestamp": 1737791105122
-      },
-      {
-        "temperature": 22.27,
-        "battery": 3.1,
-        "humidity": 30.52,
-        "timestamp": 1737791110091
-      },
-      {
-        "temperature": 29.31,
-        "battery": 6.6,
-        "humidity": 57.63,
-        "timestamp": 1737791115088
+        "battery": 4.8,
+        "humidity": 31.43,
+        "timestamp": 1737791427072
       }
     ]
   }
