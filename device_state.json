@@ -1,0 +1,80 @@
+{
+  "device_A0:B7:65:22:3C:64": {
+    "id": "device_A0:B7:65:22:3C:64",
+    "firmware": "1.0.0",
+    "capabilities": [
+      "temp",
+      "battery",
+      "humidity"
+    ],
+    "status": "online",
+    "telemetry": {
+      "temperature": 29.31,
+      "battery": 6.6,
+      "humidity": 57.63,
+      "timestamp": 1737791115088
+    },
+    "telemetryHistory": [
+      {
+        "temperature": 28.3,
+        "battery": 4.5,
+        "humidity": 46.71,
+        "timestamp": 1737791070000
+      },
+      {
+        "temperature": 23.93,
+        "battery": 3.5,
+        "humidity": 36.47,
+        "timestamp": 1737791075005
+      },
+      {
+        "temperature": 25.91,
+        "battery": 6.7,
+        "humidity": 45.2,
+        "timestamp": 1737791080081
+      },
+      {
+        "temperature": 27.35,
+        "battery": 9.7,
+        "humidity": 59.29,
+        "timestamp": 1737791085019
+      },
+      {
+        "temperature": 20.96,
+        "battery": 3.5,
+        "humidity": 65.03,
+        "timestamp": 1737791090063
+      },
+      {
+        "temperature": 21.47,
+        "battery": 7,
+        "humidity": 32.55,
+        "timestamp": 1737791095050
+      },
+      {
+        "temperature": 22.52,
+        "battery": 7.6,
+        "humidity": 37.65,
+        "timestamp": 1737791100058
+      },
+      {
+        "temperature": 25.23,
+        "battery": 7.9,
+        "humidity": 36.64,
+        "timestamp": 1737791105122
+      },
+      {
+        "temperature": 22.27,
+        "battery": 3.1,
+        "humidity": 30.52,
+        "timestamp": 1737791110091
+      },
+      {
+        "temperature": 29.31,
+        "battery": 6.6,
+        "humidity": 57.63,
+        "timestamp": 1737791115088
+      }
+    ]
+  }
+}

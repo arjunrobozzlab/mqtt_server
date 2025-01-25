@@ -42,9 +42,22 @@ function Dashboard() {
       }
     };
 
+    // Fetch devices every 5 seconds
     fetchDevices();
     const interval = setInterval(fetchDevices, 5000);
-    return () => clearInterval(interval);
+
+    // Keep Render service alive by pinging periodically
+    const keepAliveInterval = setInterval(() => {
+      axios
+        .get(API_URL)
+        .then(() => console.log("Keep-alive ping sent to server"))
+        .catch((err) => console.error("Keep-alive ping failed:", err));
+    }, 600000); // Ping every 10 minutes
+
+    return () => {
+      clearInterval(interval);
+      clearInterval(keepAliveInterval);
+    };
   }, []);
 
   const toggleDeviceSelection = (deviceId) => {
