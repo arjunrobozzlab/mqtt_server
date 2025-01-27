@@ -48,39 +48,32 @@ client.on("message", (topic, message) => {
       firmware: payload.firmware,
       capabilities: payload.capabilities,
       channels: payload.channels || 0,
-      channelStates: new Array(payload.channels || 0).fill(0), // Initialize channels to OFF
+      channelStates: payload.channelStates || new Array(payload.channels || 0).fill(false),
+      sensors: payload.sensors || {},
       status: "online",
       telemetry: null,
       telemetryHistory: [],
     };
     saveDeviceState();
     console.log("Device discovered:", payload);
-  } else if (topic.endsWith("/status")) {
-    if (devices[deviceId]) {
-      devices[deviceId].status = payload.status;
-      saveDeviceState();
-      console.log(`Device ${deviceId} is now ${payload.status}`);
-    }
   } else if (topic.endsWith("/telemetry")) {
     if (devices[deviceId]) {
-      const telemetry = { 
-        ...payload, 
-        timestamp: payload.timestamp || Date.now() 
+      const telemetry = {
+        ...payload,
+        timestamp: payload.timestamp || Date.now()
       };
       
-      // Store telemetry data, including PIR and ambient light
+      // Update telemetry and channel states
       devices[deviceId].telemetry = telemetry;
+      if (payload.channelStates) {
+        devices[deviceId].channelStates = payload.channelStates;
+      }
       
-      // Update telemetry history (keep last 10 entries)
+      // Update telemetry history
       devices[deviceId].telemetryHistory = devices[deviceId].telemetryHistory || [];
       devices[deviceId].telemetryHistory.push(telemetry);
       if (devices[deviceId].telemetryHistory.length > 10) {
         devices[deviceId].telemetryHistory.shift();
-      }
-      
-      // Update channel states if included in telemetry
-      if (payload.channels) {
-        devices[deviceId].channelStates = payload.channels;
       }
       
       console.log(`Telemetry updated for ${deviceId}:`, telemetry);
@@ -89,12 +82,14 @@ client.on("message", (topic, message) => {
   } else if (topic.endsWith("/commands")) {
     if (devices[deviceId]) {
       const { action, channel, state } = payload;
-
-      if (action === "control_channel" && channel !== undefined && state !== undefined) {
-        // Update channel state
-        devices[deviceId].channelStates[channel - 1] = state;
-        saveDeviceState();
-        console.log(`Channel ${channel} of ${deviceId} set to ${state}`);
+      
+      if (action === "toggleChannel" && channel !== undefined && state !== undefined) {
+        // Update channel state immediately
+        if (devices[deviceId].channelStates) {
+          devices[deviceId].channelStates[channel] = state;
+          saveDeviceState();
+          console.log(`Channel ${channel} of ${deviceId} toggled to ${state}`);
+        }
       }
     }
   }
