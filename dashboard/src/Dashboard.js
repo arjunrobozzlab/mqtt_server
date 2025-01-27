@@ -1,27 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
-import {
-  Chart as ChartJS,
-  LineElement,
-  PointElement,
-  LinearScale,
-  CategoryScale,
-  Title,
-  Tooltip,
-  Legend,
-} from "chart.js";
-import { Line } from "react-chartjs-2";
-
-// Register Chart.js components
-ChartJS.register(
-  LineElement,
-  PointElement,
-  LinearScale,
-  CategoryScale,
-  Title,
-  Tooltip,
-  Legend
-);
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
 
 const API_URL = "https://mqtt-server-po2j.onrender.com";
 
@@ -29,34 +7,22 @@ function Dashboard() {
   const [devices, setDevices] = useState({});
   const [filter, setFilter] = useState("all");
   const [selectedDevices, setSelectedDevices] = useState([]);
-  const [intervalStates, setIntervalStates] = useState({});
 
   useEffect(() => {
     const fetchDevices = async () => {
       try {
-        const response = await axios.get(`${API_URL}/devices`);
-        setDevices(response.data);
+        const response = await fetch(`${API_URL}/devices`);
+        const data = await response.json();
+        setDevices(data);
       } catch (error) {
         console.error("Error fetching devices:", error);
       }
     };
 
-    // Fetch devices every 5 seconds
     fetchDevices();
     const interval = setInterval(fetchDevices, 5000);
 
-    // Keep Render service alive by pinging periodically
-    const keepAliveInterval = setInterval(() => {
-      axios
-        .get(API_URL)
-        .then(() => console.log("Keep-alive ping sent to server"))
-        .catch((err) => console.error("Keep-alive ping failed:", err));
-    }, 600000); // Ping every 10 minutes
-
-    return () => {
-      clearInterval(interval);
-      clearInterval(keepAliveInterval);
-    };
+    return () => clearInterval(interval);
   }, []);
 
   const toggleDeviceSelection = (deviceId) => {
@@ -69,7 +35,17 @@ function Dashboard() {
 
   const sendCommand = async (deviceId, command) => {
     try {
-      await axios.post(`${API_URL}/devices/${deviceId}/commands`, command);
+      const response = await fetch(`${API_URL}/devices/${deviceId}/commands`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(command),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       alert(`Command sent to ${deviceId}`);
     } catch (error) {
       console.error("Error sending command:", error);
@@ -83,37 +59,26 @@ function Dashboard() {
     alert("Bulk command sent!");
   };
 
-  const handleIntervalChange = (deviceId, value) => {
-    setIntervalStates((prev) => ({
-      ...prev,
-      [deviceId]: value,
-    }));
-  };
-
-  const handleSetInterval = (deviceId) => {
-    const interval = intervalStates[deviceId];
-    if (!interval || isNaN(interval)) {
-      alert("Please enter a valid interval (in seconds).");
-      return;
-    }
-    sendCommand(deviceId, { action: "set_interval", interval: Number(interval) });
-    setIntervalStates((prev) => ({
-      ...prev,
-      [deviceId]: "",
-    })); // Clear the input field after sending the command
-  };
-
   const toggleChannel = async (deviceId, channelIndex, currentState) => {
     try {
       const command = {
-        action: "control_channel",
-        channel: channelIndex + 1,
-        state: currentState ? 0 : 1,
+        action: "toggleChannel",
+        channel: channelIndex,
+        state: !currentState
       };
-      await axios.post(`${API_URL}/devices/${deviceId}/commands`, command);
-      alert(`Channel ${channelIndex + 1} toggled for ${deviceId}`);
+      await sendCommand(deviceId, command);
+      
+      setDevices(prev => ({
+        ...prev,
+        [deviceId]: {
+          ...prev[deviceId],
+          channelStates: prev[deviceId].channelStates.map((state, idx) =>
+            idx === channelIndex ? !state : state
+          )
+        }
+      }));
     } catch (error) {
-      console.error("Error toggling channel:", error);
+      console.error(`Error toggling channel ${channelIndex + 1}:`, error);
     }
   };
 
@@ -122,35 +87,25 @@ function Dashboard() {
       return <p>No telemetry data available</p>;
     }
 
-    const data = {
-      labels: telemetryHistory.map((entry) =>
-        new Date(entry.timestamp).toLocaleTimeString()
-      ),
-      datasets: [
-        {
-          label: "Temperature (°C)",
-          data: telemetryHistory.map((entry) => entry.temperature),
-          borderColor: "rgba(75,192,192,1)",
-          fill: false,
-        },
-        {
-          label: "Battery (V)",
-          data: telemetryHistory.map((entry) => entry.battery),
-          borderColor: "rgba(255,99,132,1)",
-          fill: false,
-        },
-        {
-          label: "Humidity (%)",
-          data: telemetryHistory.map((entry) => entry.humidity),
-          borderColor: "rgba(153,102,255,1)",
-          fill: false,
-        },
-      ],
-    };
+    const data = telemetryHistory.map(entry => ({
+      time: new Date(entry.timestamp).toLocaleTimeString(),
+      temperature: entry.temperature,
+      battery: entry.battery,
+      humidity: entry.humidity
+    }));
 
     return (
-      <div style={{ width: "400px", height: "300px", margin: "10px auto" }}>
-        <Line key={deviceId} data={data} />
+      <div className="w-full h-[300px] my-4">
+        <LineChart width={400} height={300} data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="time" />
+          <YAxis />
+          <Tooltip />
+          <Legend />
+          <Line type="monotone" dataKey="temperature" name="Temperature (°C)" stroke="#8884d8" />
+          <Line type="monotone" dataKey="battery" name="Battery (V)" stroke="#82ca9d" />
+          <Line type="monotone" dataKey="humidity" name="Humidity (%)" stroke="#ffc658" />
+        </LineChart>
       </div>
     );
   };
@@ -161,82 +116,94 @@ function Dashboard() {
   });
 
   return (
-    <div>
-      <h1>Smart Building Dashboard</h1>
-      <div>
-        <button onClick={() => setFilter("all")}>All Devices</button>
-        <button onClick={() => setFilter("online")}>Online Devices</button>
-        <button onClick={() => setFilter("offline")}>Offline Devices</button>
+    <div className="p-4">
+      <h1 className="text-2xl font-bold mb-4">Smart Building Dashboard</h1>
+      <div className="space-x-2 mb-4">
+        <button 
+          className="px-4 py-2 bg-blue-500 text-white rounded" 
+          onClick={() => setFilter("all")}
+        >
+          All Devices
+        </button>
+        <button 
+          className="px-4 py-2 bg-green-500 text-white rounded" 
+          onClick={() => setFilter("online")}
+        >
+          Online Devices
+        </button>
+        <button 
+          className="px-4 py-2 bg-red-500 text-white rounded" 
+          onClick={() => setFilter("offline")}
+        >
+          Offline Devices
+        </button>
       </div>
-      <div>
-        <button onClick={() => sendBulkCommand({ action: "reboot" })}>
+      <div className="mb-4">
+        <button 
+          className="px-4 py-2 bg-yellow-500 text-white rounded"
+          onClick={() => sendBulkCommand({ action: "reboot" })}
+        >
           Reboot Selected
         </button>
       </div>
 
-      <div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredDevices.map((device) => (
           <div
             key={device.id}
-            style={{
-              border: "1px solid black",
-              margin: "10px",
-              padding: "10px",
-            }}
+            className="border rounded-lg p-4 shadow-md"
           >
-            <input
-              type="checkbox"
-              onChange={() => toggleDeviceSelection(device.id)}
-              checked={selectedDevices.includes(device.id)}
-            />
-            <h3>{device.id}</h3>
-            <div>
-              <h4>Device Info:</h4>
+            <div className="flex items-center mb-2">
+              <input
+                type="checkbox"
+                className="mr-2"
+                onChange={() => toggleDeviceSelection(device.id)}
+                checked={selectedDevices.includes(device.id)}
+              />
+              <h3 className="text-xl font-semibold">{device.id}</h3>
+            </div>
+            
+            <div className="mb-4">
+              <h4 className="font-medium">Device Info:</h4>
               <p>Firmware: {device.firmware || "N/A"}</p>
               <p>Capabilities: {device.capabilities ? device.capabilities.join(", ") : "None"}</p>
             </div>
 
-            <p>Status: {device.status || "Unknown"}</p>
+            <p className={`mb-4 ${device.status === 'online' ? 'text-green-500' : 'text-red-500'}`}>
+              Status: {device.status || "Unknown"}
+            </p>
+            
             {device.telemetry && (
-              <div>
-                <h4>Latest Telemetry:</h4>
+              <div className="mb-4">
+                <h4 className="font-medium">Latest Telemetry:</h4>
                 <p>Temperature: {device.telemetry.temperature}°C</p>
                 <p>Battery: {device.telemetry.battery}V</p>
                 <p>Humidity: {device.telemetry.humidity}%</p>
+                <p>Motion: {device.telemetry.pir_motion === 1 ? "Detected" : "No Motion"}</p>
+                <p>Ambient Light: {device.telemetry.ambient_light}</p>
               </div>
             )}
+            
             {device.telemetryHistory
               ? renderTelemetryGraph(device.telemetryHistory, device.id)
               : <p>No telemetry data available</p>}
 
-            <div>
-              <input
-                type="number"
-                placeholder="Enter interval (s)"
-                value={intervalStates[device.id] || ""}
-                onChange={(e) => handleIntervalChange(device.id, e.target.value)}
-              />
-              <button onClick={() => handleSetInterval(device.id)}>Set Interval</button>
-            </div>
-
-            <button onClick={() => sendCommand(device.id, { action: "reboot" })}>
-              Reboot Device
-            </button>
-
-            {/* New Channel Controls */}
             {device.channelStates && (
-              <div>
-                <h4>Channels:</h4>
-                {device.channelStates.map((state, index) => (
-                  <div key={index}>
-                    <p>
-                      Channel {index + 1}: {state ? "ON" : "OFF"}
-                    </p>
-                    <button onClick={() => toggleChannel(device.id, index, state)}>
-                      Toggle Channel {index + 1}
-                    </button>
-                  </div>
-                ))}
+              <div className="mt-4">
+                <h4 className="font-medium mb-2">Channels:</h4>
+                <div className="space-y-2">
+                  {device.channelStates.map((state, index) => (
+                    <div key={index} className="flex items-center justify-between">
+                      <p>Channel {index + 1}: {state ? "ON" : "OFF"}</p>
+                      <button
+                        className={`px-3 py-1 rounded ${state ? 'bg-green-500' : 'bg-gray-500'} text-white`}
+                        onClick={() => toggleChannel(device.id, index, state)}
+                      >
+                        Toggle Channel {index + 1}
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>

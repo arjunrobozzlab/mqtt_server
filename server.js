@@ -43,7 +43,7 @@ client.on("message", (topic, message) => {
   const deviceId = topic.split("/")[0];
 
   if (topic === "global/discovery") {
-    devices[payload.id] = {
+    devices[deviceId] = {
       id: payload.id,
       firmware: payload.firmware,
       capabilities: payload.capabilities,
@@ -63,28 +63,34 @@ client.on("message", (topic, message) => {
     }
   } else if (topic.endsWith("/telemetry")) {
     if (devices[deviceId]) {
-      const telemetry = { ...payload, timestamp: Date.now() };
+      const telemetry = { 
+        ...payload, 
+        timestamp: payload.timestamp || Date.now() 
+      };
+      
+      // Store telemetry data, including PIR and ambient light
       devices[deviceId].telemetry = telemetry;
-
-      // Update channel states if included in telemetry
-      if (payload.channels) {
-        devices[deviceId].channelStates = payload.channels;
-      }
-
-      // Maintain telemetry history (last 10 entries)
+      
+      // Update telemetry history (keep last 10 entries)
+      devices[deviceId].telemetryHistory = devices[deviceId].telemetryHistory || [];
       devices[deviceId].telemetryHistory.push(telemetry);
       if (devices[deviceId].telemetryHistory.length > 10) {
         devices[deviceId].telemetryHistory.shift();
       }
-
+      
+      // Update channel states if included in telemetry
+      if (payload.channels) {
+        devices[deviceId].channelStates = payload.channels;
+      }
+      
+      console.log(`Telemetry updated for ${deviceId}:`, telemetry);
       saveDeviceState();
-      console.log(`Telemetry from ${deviceId}:`, telemetry);
     }
   } else if (topic.endsWith("/commands")) {
     if (devices[deviceId]) {
       const { action, channel, state } = payload;
 
-      if (action === "control_channel" && channel && state !== undefined) {
+      if (action === "control_channel" && channel !== undefined && state !== undefined) {
         // Update channel state
         devices[deviceId].channelStates[channel - 1] = state;
         saveDeviceState();
