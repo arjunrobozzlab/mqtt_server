@@ -4,11 +4,7 @@ const cors = require("cors");
 const fs = require("fs");
 
 const app = express();
-app.use(
-  cors({
-    origin: "https://smartaxiom.netlify.app", // Allow only your Netlify site
-  })
-);
+app.use(cors({ origin: "https://smartaxiom.netlify.app" })); // Allow only your Netlify site
 
 const brokerUrl = "mqtt://gull.rmq.cloudamqp.com";
 const mqttOptions = {
@@ -39,6 +35,7 @@ client.on("connect", () => {
   client.subscribe("global/discovery");
   client.subscribe("+/status");
   client.subscribe("+/telemetry");
+  client.subscribe("+/commands");
 });
 
 client.on("message", (topic, message) => {
@@ -50,6 +47,8 @@ client.on("message", (topic, message) => {
       id: payload.id,
       firmware: payload.firmware,
       capabilities: payload.capabilities,
+      channels: payload.channels || 0,
+      channelStates: new Array(payload.channels || 0).fill(0), // Initialize channels to OFF
       status: "online",
       telemetry: null,
       telemetryHistory: [],
@@ -64,11 +63,13 @@ client.on("message", (topic, message) => {
     }
   } else if (topic.endsWith("/telemetry")) {
     if (devices[deviceId]) {
-      const telemetry = {
-        ...payload,
-        timestamp: Date.now(),
-      };
+      const telemetry = { ...payload, timestamp: Date.now() };
       devices[deviceId].telemetry = telemetry;
+
+      // Update channel states if included in telemetry
+      if (payload.channels) {
+        devices[deviceId].channelStates = payload.channels;
+      }
 
       // Maintain telemetry history (last 10 entries)
       devices[deviceId].telemetryHistory.push(telemetry);
@@ -78,6 +79,17 @@ client.on("message", (topic, message) => {
 
       saveDeviceState();
       console.log(`Telemetry from ${deviceId}:`, telemetry);
+    }
+  } else if (topic.endsWith("/commands")) {
+    if (devices[deviceId]) {
+      const { action, channel, state } = payload;
+
+      if (action === "control_channel" && channel && state !== undefined) {
+        // Update channel state
+        devices[deviceId].channelStates[channel - 1] = state;
+        saveDeviceState();
+        console.log(`Channel ${channel} of ${deviceId} set to ${state}`);
+      }
     }
   }
 });

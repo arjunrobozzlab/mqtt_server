@@ -23,14 +23,13 @@ ChartJS.register(
   Legend
 );
 
-//const API_URL = "http://localhost:3000";
 const API_URL = "https://mqtt-server-po2j.onrender.com";
 
 function Dashboard() {
   const [devices, setDevices] = useState({});
   const [filter, setFilter] = useState("all");
   const [selectedDevices, setSelectedDevices] = useState([]);
-  const [intervalStates, setIntervalStates] = useState({}); // State to track intervals for each device
+  const [intervalStates, setIntervalStates] = useState({});
 
   useEffect(() => {
     const fetchDevices = async () => {
@@ -104,10 +103,19 @@ function Dashboard() {
     })); // Clear the input field after sending the command
   };
 
-  const filteredDevices = Object.values(devices).filter((device) => {
-    if (filter === "all") return true;
-    return device.status === filter;
-  });
+  const toggleChannel = async (deviceId, channelIndex, currentState) => {
+    try {
+      const command = {
+        action: "control_channel",
+        channel: channelIndex + 1,
+        state: currentState ? 0 : 1,
+      };
+      await axios.post(`${API_URL}/devices/${deviceId}/commands`, command);
+      alert(`Channel ${channelIndex + 1} toggled for ${deviceId}`);
+    } catch (error) {
+      console.error("Error toggling channel:", error);
+    }
+  };
 
   const renderTelemetryGraph = (telemetryHistory, deviceId) => {
     if (!telemetryHistory || telemetryHistory.length === 0) {
@@ -147,9 +155,14 @@ function Dashboard() {
     );
   };
 
+  const filteredDevices = Object.values(devices).filter((device) => {
+    if (filter === "all") return true;
+    return device.status === filter;
+  });
+
   return (
     <div>
-      <h1>Device Dashboard</h1>
+      <h1>Smart Building Dashboard</h1>
       <div>
         <button onClick={() => setFilter("all")}>All Devices</button>
         <button onClick={() => setFilter("online")}>Online Devices</button>
@@ -209,6 +222,23 @@ function Dashboard() {
             <button onClick={() => sendCommand(device.id, { action: "reboot" })}>
               Reboot Device
             </button>
+
+            {/* New Channel Controls */}
+            {device.channelStates && (
+              <div>
+                <h4>Channels:</h4>
+                {device.channelStates.map((state, index) => (
+                  <div key={index}>
+                    <p>
+                      Channel {index + 1}: {state ? "ON" : "OFF"}
+                    </p>
+                    <button onClick={() => toggleChannel(device.id, index, state)}>
+                      Toggle Channel {index + 1}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         ))}
       </div>
